@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = ".;gserver";
+package gserver;
+
+service Breed {
+    rpc Create(CreateRequest) returns (CreateReply) {}
+}
+
+enum CreateCode {
+    CREATE_SUCCESS = 0;
+    CREATE_ERROR = 1;
+}
+
+message CreateRequest {
+    string ServiceName = 1;// zeus can add a yurt to a service directly
+}
+
+message CreateReply {
+    CreateCode Code = 1;
+}

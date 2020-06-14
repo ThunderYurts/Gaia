@@ -72,28 +72,35 @@ func (c *Client) PullImage(image string) error {
 	return err
 }
 
-// Create a new container and use net=host(v1), will return error about do not have enough port to deploy
-// will pull image if it is not existed
-func (c *Client) Create(image string, env []string, labels map[string]string, exportbind []string) (string, map[string]string, error) {
-
-	// err := c.PullImage(image)
-	// if err != nil {
-	// 	return "", nil, err
-	// }
-	exposedPorts := nat.PortSet{}
-	portBindings := nat.PortMap{}
-	exports := make(map[string]string)
+// PrePareNetwork will
+func (c *Client) PrePareNetwork(exportbind []string) (exposedPorts nat.PortSet, portBindings nat.PortMap, exports map[string]string, err error) {
+	exposedPorts = nat.PortSet{}
+	portBindings = nat.PortMap{}
+	exports = make(map[string]string)
+	err = nil
 	for _, external := range exportbind {
 		exposedPorts[nat.Port(external)] = struct{}{}
-		port, err := c.getFreePort()
+		port, portErr := c.getFreePort()
 		if err != nil {
-			return "", nil, err
+			err = portErr
+			return
 		}
 		p := strconv.Itoa(port)
 		exports[external] = p
 		portBindings[nat.Port(external)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: p}}
 	}
+	return
+}
 
+// Create a new container and use net=host(v1), will return error about do not have enough port to deploy
+// will pull image if it is not existed
+// pay attention to the result, we can not guarantee that the server in container is running and
+func (c *Client) Create(image string, env []string, labels map[string]string, exposedPorts nat.PortSet, portBindings nat.PortMap) (string, error) {
+
+	err := c.PullImage(image)
+	if err != nil {
+		return "", err
+	}
 	// TODO add PORT ENV
 	container, err := c.client.ContainerCreate(c.ctx, &container.Config{
 		Image:        image,
@@ -108,15 +115,15 @@ func (c *Client) Create(image string, env []string, labels map[string]string, ex
 	)
 	if err != nil {
 		fmt.Println("hrerere")
-		return "", nil, err
+		return "", err
 	}
 	if err := c.client.ContainerStart(c.ctx, container.ID, types.ContainerStartOptions{}); err != nil {
 		// clean this container
 		_ = c.client.ContainerRemove(c.ctx, container.ID, types.ContainerRemoveOptions{Force: true})
-		return "", nil, err
+		return "", err
 	}
 
-	return container.ID, exports, nil
+	return container.ID, nil
 }
 
 // Destroy will destroy container by name
