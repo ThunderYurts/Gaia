@@ -16,19 +16,21 @@ import (
 
 // SimpleMonitor will fetch all container and get them brief info
 type SimpleMonitor struct {
-	ctx    context.Context
-	client *client.Client
-	conn   *zk.Conn
-	name   string
+	ctx        context.Context
+	client     *client.Client
+	conn       *zk.Conn
+	name       string
+	createAddr string
 }
 
 // NewSimpleMonitor is a help function
-func NewSimpleMonitor(ctx context.Context, client *client.Client, conn *zk.Conn, name string) SimpleMonitor {
+func NewSimpleMonitor(ctx context.Context, client *client.Client, conn *zk.Conn, name string, createAddr string) SimpleMonitor {
 	return SimpleMonitor{
-		ctx:    ctx,
-		client: client,
-		conn:   conn,
-		name:   name,
+		ctx:        ctx,
+		client:     client,
+		conn:       conn,
+		name:       name,
+		createAddr: createAddr,
 	}
 }
 
@@ -66,7 +68,7 @@ func (sm *SimpleMonitor) SyncNodeStat() error {
 				containers, err := sm.client.ContainerList(sm.ctx, types.ContainerListOptions{
 					Filters: arg,
 				})
-				fmt.Printf("containers in check: %v\n", containers)
+				//fmt.Printf("containers in check: %v\n", containers)
 
 				if err != nil {
 					fmt.Printf("72 %s\n", err.Error())
@@ -108,7 +110,7 @@ func (sm *SimpleMonitor) SyncNodeStat() error {
 					// fmt.Printf("memory usage %v\n", memoryStats["usage"].(float64))
 					// fmt.Printf("cpu usage %v\n", totalUsage["total_usage"].(float64))
 				}
-				nodeInfo := zookeeper.ZKNode{CPU: CPU, Memory: Memory}
+				nodeInfo := zookeeper.ZKNode{CPU: CPU, Memory: Memory, CreateAddr: sm.createAddr}
 				buf := new(bytes.Buffer)
 				enc := gob.NewEncoder(buf)
 				err = enc.Encode(nodeInfo)
@@ -117,7 +119,7 @@ func (sm *SimpleMonitor) SyncNodeStat() error {
 				}
 				stat, err = sm.conn.Set(gconst.GaiaRoot+"/"+sm.name, buf.Bytes(), stat.Version)
 				// TODO sync data to zookeeper
-				fmt.Printf("update value ^%v\n", nodeInfo)
+				//fmt.Printf("update value %v\n", nodeInfo)
 				if err != nil {
 					return err
 				}

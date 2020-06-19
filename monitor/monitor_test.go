@@ -83,7 +83,7 @@ func testMonitor(t *testing.T) {
 			_, err = conn.Create(gconst.GaiaRoot, []byte{}, 0, zk.WorldACL(zk.PermAll))
 		}
 		convey.So(err, convey.ShouldBeNil)
-		monitor := NewSimpleMonitor(ctx, cli, conn, "test")
+		monitor := NewSimpleMonitor(ctx, cli, conn, "test", "127.0.0.1:30000")
 		go func() {
 			err = monitor.SyncNodeStat()
 			if err != nil {

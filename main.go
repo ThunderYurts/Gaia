@@ -1,54 +1,42 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
-	"io"
+	"github.com/ThunderYurts/Gaia/gaia"
 	"os"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+	"os/signal"
 )
 
+var (
+	help   bool
+	port   string
+	zkAddr string
+	name   string
+	ip     string
+)
+
+func init() {
+	flag.BoolVar(&help, "h", false, "this help")
+	flag.StringVar(&port, "p", ":30000", "set create port")
+	flag.StringVar(&zkAddr, "zk", "106.15.225.249:3030", "set zeus connection zookeeper cluster")
+	flag.StringVar(&name, "n", "gaia", "set gaia name")
+	flag.StringVar(&ip, "ip", "127.0.0.1", "set ip")
+}
 func main() {
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		panic(err)
+	flag.Parse()
+	if help {
+		flag.Usage()
+		return
 	}
-	ctx := context.Background()
-	fmt.Println("18")
-	res, err := cli.ImagePull(ctx, "registry.cn-hangzhou.aliyuncs.com/brynelee/httpbin", types.ImagePullOptions{})
-	fmt.Println("20")
-	if err != nil {
-		panic(err)
-	}
-	defer res.Close()
-	io.Copy(os.Stdout, res)
-	// containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// for _, container := range containers {
-	// 	id := container.ID
-	// 	stat, err := cli.ContainerStats(ctx, id, false)
-	// 	if err != nil {
-	// 		fmt.Println(err.Error())
-	// 		continue
-	// 	}
-	// 	var dat map[string]interface{}
-	// 	buf := new(bytes.Buffer)
-	// 	buf.ReadFrom(stat.Body)
-	// 	str := buf.String()
-	// 	err = json.Unmarshal([]byte(str), &dat)
-	// 	if err != nil {
-	// 		fmt.Println(err.Error())
-	// 		continue
-	// 	}
-	// 	cpuStats := dat["cpu_stats"]
-	// 	mcpuStats := cpuStats.(map[string]interface{})
-	// 	totalUsage := mcpuStats["cpu_usage"].(map[string]interface{})
-	// 	memoryStats := dat["memory_stats"].(map[string]interface{})
-	// 	fmt.Printf("memory usage %v\n", memoryStats["usage"].(float64))
-	// 	fmt.Printf("cpu usage %v\n", totalUsage["total_usage"].(float64))
-	// }
+	g := gaia.NewGaia(ip, port, name, []string{zkAddr})
+	g.Start()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	s := <-c
+
+	fmt.Println("Got signal:", s)
+	g.Stop()
 }

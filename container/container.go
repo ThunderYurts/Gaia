@@ -81,7 +81,8 @@ func (c *Client) PrePareNetwork(exportbind []string) (exposedPorts nat.PortSet, 
 	for _, external := range exportbind {
 		exposedPorts[nat.Port(external)] = struct{}{}
 		port, portErr := c.getFreePort()
-		if err != nil {
+		if portErr != nil {
+			panic(portErr)
 			err = portErr
 			return
 		}
@@ -90,6 +91,24 @@ func (c *Client) PrePareNetwork(exportbind []string) (exposedPorts nat.PortSet, 
 		portBindings[nat.Port(external)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: p}}
 	}
 	return
+}
+
+func randomName(n int, allowedChars ...[]rune) string {
+	var defaultLetters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	var letters []rune
+
+	if len(allowedChars) == 0 {
+		letters = defaultLetters
+	} else {
+		letters = allowedChars[0]
+	}
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(b)
 }
 
 // Create a new container and use net=host(v1), will return error about do not have enough port to deploy
@@ -104,7 +123,7 @@ func (c *Client) Create(image string, env []string, labels map[string]string, ex
 	// TODO add PORT ENV
 	container, err := c.client.ContainerCreate(c.ctx, &container.Config{
 		Image:        image,
-		Env:          env,
+		Env:          append(env, "YURT_NAME="+randomName(10)),
 		Labels:       labels,
 		ExposedPorts: exposedPorts,
 	}, &container.HostConfig{
@@ -114,7 +133,7 @@ func (c *Client) Create(image string, env []string, labels map[string]string, ex
 		"",
 	)
 	if err != nil {
-		fmt.Println("hrerere")
+		fmt.Printf("117 err : %v\n", err)
 		return "", err
 	}
 	if err := c.client.ContainerStart(c.ctx, container.ID, types.ContainerStartOptions{}); err != nil {

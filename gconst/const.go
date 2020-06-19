@@ -2,7 +2,7 @@ package gconst
 
 const (
 	// YurtImage is the base url to yurt image
-	YurtImage = ""
+	YurtImage = "registry.cn-hangzhou.aliyuncs.com/se-devgo/yurt:v2.0"
 
 	// ActionPort is port action server use in container
 	ActionPort = "8000/tcp"

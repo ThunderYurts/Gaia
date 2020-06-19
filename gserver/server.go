@@ -37,11 +37,13 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 	// create yurt to yurt pool
 	exposedPorts, portBindings, portBind, err := s.client.PrePareNetwork([]string{gconst.ActionPort, gconst.SyncPort})
 	if err != nil {
+		panic(err)
 		return &CreateReply{Code: CreateCode_CREATE_ERROR}, nil
 	}
-	env := []string{"ACTION_ADDR=" + s.ip + ":" + portBind[gconst.ActionPort], "SYNC_ADDR=" + s.ip + ":" + portBind[gconst.SyncPort]}
+	env := []string{"ACTION_ADDR=" + s.ip + ":" + portBind[gconst.ActionPort], "SYNC_ADDR=" + s.ip + ":" + portBind[gconst.SyncPort], "SERVICE_NAME:" + in.ServiceName}
 	_, err = s.client.Create(gconst.YurtImage, env, map[string]string{"app": "thunderyurt"}, exposedPorts, portBindings)
 	if err != nil {
+		panic(err)
 		return &CreateReply{Code: CreateCode_CREATE_ERROR}, nil
 	}
 	return &CreateReply{Code: CreateCode_CREATE_SUCCESS}, nil
