@@ -40,8 +40,11 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 		panic(err)
 		return &CreateReply{Code: CreateCode_CREATE_ERROR}, nil
 	}
-	env := []string{"ACTION_ADDR=" + s.ip + ":" + portBind[gconst.ActionPort], "SYNC_ADDR=" + s.ip + ":" + portBind[gconst.SyncPort], "SERVICE_NAME:" + in.ServiceName}
+
+	env := []string{"HOST_IP=" + s.ip, "ACTION_PORT=:" + portBind[gconst.ActionPort], "SYNC_PORT=:" + portBind[gconst.SyncPort], "SERVICE_NAME:" + in.ServiceName}
+	fmt.Printf("env: %v\n", env)
 	_, err = s.client.Create(gconst.YurtImage, env, map[string]string{"app": "thunderyurt"}, exposedPorts, portBindings)
+
 	if err != nil {
 		panic(err)
 		return &CreateReply{Code: CreateCode_CREATE_ERROR}, nil
