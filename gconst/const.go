@@ -10,6 +10,6 @@ const (
 	SyncPort = "8000/tcp"
 	// YurtFilter is for container list
 	YurtFilter = "label=app=thunderyurt"
-
+	// GaiaRoot is the root of Gaia, holded by GaiaManager
 	GaiaRoot = "/gaia"
 )

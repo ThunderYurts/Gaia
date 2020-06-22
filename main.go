@@ -6,6 +6,7 @@ import (
 	"github.com/ThunderYurts/Gaia/gaia"
 	"os"
 	"os/signal"
+	"strings"
 )
 
 var (
@@ -29,7 +30,8 @@ func main() {
 		flag.Usage()
 		return
 	}
-	g := gaia.NewGaia(ip, port, name, []string{zkAddr})
+	addrs := strings.Split(zkAddr, ";")
+	g := gaia.NewGaia(ip, port, name, addrs)
 	g.Start()
 
 	c := make(chan os.Signal, 1)
